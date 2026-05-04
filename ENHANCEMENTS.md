@@ -163,5 +163,19 @@ Benefits:
 - Debug issues faster
 - Measure retrieval accuracy
 
+---
+
+## 13. Prompt Injection Defense
+Proactive strategies to detect, mitigate, and prevent adversarial manipulation of LLM inputs.
 
 ---
+
+## 14. Weaviate Migration with Built in Hybrid Search Support & Enterprise Architecture
+Transition from local vector storage to an enterprise-grade vector database for scalability and production reliability.
+
+---
+
+## 15. Small Language Model (SLM) Routing
+For simple tasks like summarization or intent detection, using a massive model is overkill and expensive.
+
+- Implement a classifier/router agent (using a fast model like Llama 3 8B or Phi-3) to decide if a query needs a full RAG pipeline or if it can be answered by a cheaper, local model.
