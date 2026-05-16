@@ -1,0 +1,53 @@
+@startuml
+!theme plain
+skinparam componentStyle rectangle
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontName Courier
+
+title Component Diagram - QuikSesh LLM Chat
+
+package "Frontend" {
+  [React SPA\n(port 8501)] as FRONTEND
+}
+
+package "Backend" {
+  [FastAPI Application\n(port 8000)] as BACKEND
+
+  package "API Layer" {
+    [APIRouter\n/chat /messages ] as ROUTER
+  }
+
+  package "Services" {
+    [DatabaseService\nSQLite Client] as DBSVC
+    [LLMService\nOpenAI-compat Client] as LLMSVC
+  }
+
+  ROUTER ..> DBSVC : loads history\nsaves messages
+  ROUTER ..> LLMSVC : streams tokens
+}
+
+database "SQLite\nchat.db" as DB
+
+node "llama.cpp\nGPU Server\n(port 8080)" as LLAMA
+
+FRONTEND -(0- ROUTER : HTTP POST /api/chat\nSSE stream
+FRONTEND -(0- ROUTER : GET /api/messages\nDELETE /api/messages
+
+DBSVC --> DB : SQL queries
+LLMSVC -(0- LLAMA : HTTP POST /v1/chat/completions\n SSE tokens
+
+note right of DBSVC
+  Table: chat_messages
+  Columns: id, role,
+  content, timestamp
+end note
+
+note right of LLMSVC
+  Handles:
+  - OOM errors
+  - Model not found
+  - GPU errors
+  - Timeouts
+end note
+
+@enduml

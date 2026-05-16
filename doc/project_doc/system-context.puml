@@ -1,0 +1,64 @@
+@startuml
+!theme plain
+skinparam componentStyle rectangle
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontName Courier
+skinparam defaultFontSize 10
+skinparam packageBorderColor #5D6D7E
+skinparam packageFontSize 11
+skinparam packageFontStyle bold
+
+title Session Memory Q&A Agent
+
+left to right direction
+
+actor "User" as USER
+
+package "CLI Scripts" {
+  [query.py\nInteractive Q&A] as CLI_Q
+  [ingestion.py\nRebuild Index] as CLI_I
+}
+
+package "Services" {
+  [QA Agent\nqa.py] as AGENT
+  [Memory\nmemory.py] as MEM
+  [Index Builder\nindex_builder.py] as IDX
+  [Text Loader\text_loader.py] as LOAD
+}
+
+database "ChromaDB" as DB
+node "Google GenAI" as GENAI
+node "Unstructured.io" as UNSTR
+node "data/input/" as FS
+
+USER --> CLI_Q : ask question
+USER --> CLI_I : run
+
+CLI_Q --> AGENT : ask()
+CLI_Q --> MEM : get_context()
+AGENT --> MEM : get_context()\nadd_message()
+AGENT --> DB : MMR retrieve\nqna_docs
+AGENT --> GENAI : LLM complete
+
+MEM --> DB : read / write\nconversation_memory
+MEM --> GENAI : embed messages
+
+IDX --> DB : store chunks\nqna_docs
+IDX --> GENAI : embed chunks
+IDX ..> UNSTR : partition + chunk
+IDX ..> LOAD : load files
+LOAD --> FS : read .md .txt
+
+CLI_I --> IDX : build_index()
+
+note right of DB
+  qna_docs (KB)
+  conversation_memory
+end note
+
+note right of GENAI
+  gemini-3.1-flash-lite
+  gemini-embedding-001
+end note
+
+@enduml

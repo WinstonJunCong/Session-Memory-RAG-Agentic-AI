@@ -1,0 +1,38 @@
+@startuml
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontName Courier
+skinparam defaultFontSize 10
+skinparam activityBorderColor #2E86C1
+skinparam activityBackgroundColor #EBF5FB
+skinparam arrowColor #2E86C1
+
+title Ingestion Pipeline
+
+start
+
+:Place .md / .txt\nin data/input/;
+
+:python ingestion.py;
+
+:load_text_files();
+note right: recursive glob
+
+:partition_document();
+note right: Unstructured.io\npartition_md / partition_text
+
+:chunk_by_title();
+note right: max=2000\nsoft=1000\nmin=350 chars
+
+:elements_to_nodes();
+note right: LlamaIndex TextNodes\n+ metadata
+
+:delete old collection;
+note right: qna_docs + orphans
+
+:VectorStoreIndex();
+note right: Gemini embed\nstore in ChromaDB
+
+stop
+
+@enduml

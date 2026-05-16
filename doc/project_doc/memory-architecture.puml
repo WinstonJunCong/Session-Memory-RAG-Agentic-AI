@@ -1,0 +1,36 @@
+@startuml
+!theme plain
+skinparam componentStyle rectangle
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontName Courier
+skinparam defaultFontSize 10
+
+title Hybrid Memory Architecture
+
+left to right direction
+
+[User Question] as Q
+
+database "ChromaDB\nconversation_memory" as CM
+[In-Memory Buffer\nlast 5 messages] as RB
+[Memory Context] as MC
+
+Q --> RB : get_recent_messages()
+Q --> CM : semantic search (top_k=4)
+
+RB --> MC : recent buffer
+CM --> MC : relevant past
+
+MC --> MC : deduplicate\ncombine
+
+note right of RB
+  Guaranteed recency
+  On add: append + trim
+end note
+
+note right of CM
+  All msg embedded
+  On add: embed + insert
+end note
+
+@enduml

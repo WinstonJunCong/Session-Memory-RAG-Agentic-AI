@@ -1,0 +1,60 @@
+@startuml
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontName Courier
+skinparam defaultFontSize 10
+skinparam participantPadding 30
+skinparam sequenceMessageAlign center
+
+title Query Pipeline
+
+actor User
+participant "query.py" as CLI
+participant "Memory" as MEM
+participant "Retriever" as RET
+collections "ChromaDB" as DB
+participant "Gemini LLM" as LLM
+
+User -> CLI: question
+activate CLI
+
+CLI -> MEM: get_context(q)
+activate MEM
+MEM -> MEM: get_recent_messages()
+MEM -> DB: semantic search\ntop_k=4
+DB --> MEM: past messages
+MEM -> MEM: deduplicate
+MEM --> CLI: memory context
+deactivate MEM
+
+CLI -> RET: retrieve(q)
+activate RET
+RET -> DB: MMR retrieval\ntop_k=6, lambda=0.7
+DB --> RET: document chunks
+RET --> CLI: nodes
+deactivate RET
+
+CLI -> CLI: build prompt
+
+note right of CLI
+  MEMORY section
+  KNOWLEDGE BASE section
+  RULES + QUESTION
+end note
+
+CLI -> LLM: complete(prompt)
+activate LLM
+LLM --> CLI: answer
+deactivate LLM
+
+CLI -> MEM: add_message(user, q)
+CLI -> MEM: add_message(assistant, a)
+
+note right of MEM
+  Saved to buffer + ChromaDB
+end note
+
+CLI --> User: display answer
+deactivate CLI
+
+@enduml
